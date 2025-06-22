@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran Reader - Alhambra Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lato:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <span class="arabic-title">القرآن الكريم</span>
+                    <span class="english-title">Noble Quran</span>
+                </h1>
+                <nav class="nav-links">
+                    <button class="nav-btn" id="homeBtn">
+                        <span>📚 Chapters</span>
+                    </button>
+                    <button class="nav-btn" id="bookmarksBtn">
+                        <span>🔖 Bookmarks</span>
+                    </button>
+                    <button class="nav-btn" id="highlightsBtn">
+                        <span>✨ Highlights</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <div class="container">
+            <!-- Chapter List View -->
+            <section id="chapterList" class="chapter-list-section">
+                <div class="islamic-border-decoration"></div>
+                <h2 class="section-title">Select a Chapter</h2>
+                <div class="chapters-grid" id="chaptersGrid">
+                    <!-- Chapters will be dynamically loaded here -->
+                </div>
+            </section>
+
+            <!-- Chapter Reader View -->
+            <section id="chapterReader" class="chapter-reader-section hidden">
+                <div class="reader-header">
+                    <button class="back-btn" id="backBtn">
+                        <span>← Back to Chapters</span>
+                    </button>
+                    <div class="chapter-info">
+                        <h2 class="chapter-title-arabic" id="chapterTitleArabic"></h2>
+                        <h3 class="chapter-title-english" id="chapterTitleEnglish"></h3>
+                        <p class="chapter-translation" id="chapterTranslation"></p>
+                    </div>
+                </div>
+
+                <!-- Audio Controls -->
+                <div class="audio-controls">
+                    <div class="playback-controls">
+                        <button class="control-btn" id="prevVerseBtn" title="Previous Verse">⏮</button>
+                        <button class="control-btn play-pause-btn" id="playPauseBtn" title="Play/Pause">▶</button>
+                        <button class="control-btn" id="nextVerseBtn" title="Next Verse">⏭</button>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-info">
+                            <span id="currentTime">0:00</span>
+                            <span id="duration">0:00</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                            <input type="range" class="progress-slider" id="progressSlider" min="0" max="100" value="0">
+                        </div>
+                    </div>
+
+                    <div class="speed-control">
+                        <label for="speedSelect">Speed:</label>
+                        <select id="speedSelect" class="form-control">
+                            <option value="0.9">0.9x</option>
+                            <option value="1.0" selected>1.0x</option>
+                            <option value="1.1">1.1x</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Verses Container -->
+                <div class="verses-container" id="versesContainer">
+                    <!-- Verses will be dynamically loaded here -->
+                </div>
+
+                <!-- Audio Element -->
+                <audio id="audioPlayer" preload="metadata"></audio>
+            </section>
+
+            <!-- Bookmarks View -->
+            <section id="bookmarksSection" class="bookmarks-section hidden">
+                <div class="islamic-border-decoration"></div>
+                <h2 class="section-title">Your Bookmarks</h2>
+                <div class="bookmarks-list" id="bookmarksList">
+                    <!-- Bookmarks will be dynamically loaded here -->
+                </div>
+            </section>
+
+            <!-- Highlights View -->
+            <section id="highlightsSection" class="highlights-section hidden">
+                <div class="islamic-border-decoration"></div>
+                <h2 class="section-title">Highlighted Verses</h2>
+                <div class="highlights-list" id="highlightsList">
+                    <!-- Highlights will be dynamically loaded here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="islamic-spinner"></div>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast hidden" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
