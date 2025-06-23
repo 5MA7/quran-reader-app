@@ -1,6 +1,135 @@
 // Quran Reader Application - Islamic Design
 // Complete functionality with bookmarks, highlights, and audio synchronization
 
+// Simple Quran Audio Player for Beginners
+class SimpleQuranPlayer {
+    constructor() {
+        // This is the base URL from QuranicAudio.com API
+        this.baseUrl = 'https://download.quranicaudio.com/quran/';
+        this.alAfasyPath = 'mishaari_raashid_al_3afaasee/'; // Al-Afasy's path
+        
+        // Get HTML elements
+        this.audio = document.getElementById('quran-audio');
+        this.chapterTitle = document.getElementById('chapter-title');
+        this.chapterArabic = document.getElementById('chapter-arabic');
+        this.loading = document.getElementById('loading');
+        this.errorMessage = document.getElementById('error-message');
+        this.chapterSelector = document.getElementById('chapter-selector');
+        
+        this.setupEventListeners();
+    }
+    
+    // This function sets up all the button clicks and audio events
+    setupEventListeners() {
+        // When user selects a chapter from dropdown
+        this.chapterSelector.addEventListener('change', (e) => {
+            const chapterNumber = e.target.value;
+            if (chapterNumber) {
+                this.loadChapter(parseInt(chapterNumber));
+            }
+        });
+        
+        // When audio starts loading
+        this.audio.addEventListener('loadstart', () => {
+            this.showLoading();
+        });
+        
+        // When audio is ready to play
+        this.audio.addEventListener('canplay', () => {
+            this.hideLoading();
+            console.log('Audio is ready to play!');
+        });
+        
+        // If there's an error loading audio
+        this.audio.addEventListener('error', () => {
+            this.showError('Could not load audio. Please try again.');
+        });
+    }
+    
+    // This function loads a specific chapter
+    loadChapter(chapterNumber) {
+        console.log(`Loading chapter ${chapterNumber}`);
+        
+        // Clear any previous errors
+        this.hideError();
+        
+        // Get chapter information
+        const chapterInfo = this.getChapterInfo(chapterNumber);
+        
+        // Update the display
+        this.updateChapterDisplay(chapterInfo);
+        
+        // Build the audio URL
+        const audioUrl = this.buildAudioUrl(chapterNumber);
+        console.log('Audio URL:', audioUrl);
+        
+        // Load the audio
+        this.audio.src = audioUrl;
+        this.audio.load();
+    }
+    
+    // This function creates the audio URL
+    buildAudioUrl(chapterNumber) {
+        // Convert chapter number to 3-digit format (1 becomes 001)
+        const paddedNumber = chapterNumber.toString().padStart(3, '0');
+        
+        // Combine all parts to make the full URL
+        return `${this.baseUrl}${this.alAfasyPath}${paddedNumber}.mp3`;
+    }
+    
+    // This function gets chapter information
+    getChapterInfo(chapterNumber) {
+        // Simple list of first few chapters - you can expand this later
+        const chapters = {
+            1: { name: 'Al-Fatiha', arabic: 'الفاتحة', english: 'The Opener' },
+            2: { name: 'Al-Baqarah', arabic: 'البقرة', english: 'The Cow' },
+            3: { name: 'Al-Imran', arabic: 'آل عمران', english: 'Family of Imran' }
+        };
+        
+        return chapters[chapterNumber] || { name: 'Unknown Chapter', arabic: '', english: '' };
+    }
+    
+    // This function updates what the user sees
+    updateChapterDisplay(chapterInfo) {
+        this.chapterTitle.textContent = `${chapterInfo.name} - ${chapterInfo.english}`;
+        this.chapterArabic.textContent = chapterInfo.arabic;
+    }
+    
+    // Show loading message
+    showLoading() {
+        this.loading.style.display = 'block';
+        this.hideError();
+    }
+    
+    // Hide loading message
+    hideLoading() {
+        this.loading.style.display = 'none';
+    }
+    
+    // Show error message
+    showError(message) {
+        this.errorMessage.textContent = message;
+        this.errorMessage.style.display = 'block';
+        this.hideLoading();
+    }
+    
+    // Hide error message
+    hideError() {
+        this.errorMessage.style.display = 'none';
+    }
+}
+
+// Start the app when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Starting Quran app...');
+    const player = new SimpleQuranPlayer();
+    
+    // Automatically load Al-Fatiha as a test
+    setTimeout(() => {
+        player.loadChapter(1);
+    }, 1000);
+});
+
 class QuranReader {
     constructor() {
         // Application data
