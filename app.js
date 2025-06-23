@@ -1,7 +1,7 @@
 // Quran Reader Application - Islamic Design
 // Complete functionality with bookmarks, highlights, and audio synchronization
 
-// Corrected Quran App with Proper Error Handling
+// Alhambra Quran App - Clean Version
 class AlhambraQuranApp {
     constructor() {
         // QuranicAudio.com API configuration
@@ -13,24 +13,47 @@ class AlhambraQuranApp {
         this.currentVerseIndex = 0;
         this.isPlaying = false;
         this.verses = [];
-        this.bookmarks = JSON.parse(localStorage.getItem('quran_bookmarks') || '{}');
-        this.highlights = JSON.parse(localStorage.getItem('quran_highlights') || '{}');
+        this.bookmarks = this.loadFromStorage('quran_bookmarks');
+        this.highlights = this.loadFromStorage('quran_highlights');
         
-        // Get DOM elements with null checks
-        this.initializeElements();
-        
-        // Only initialize if essential elements exist
-        if (this.hasEssentialElements()) {
-            this.init();
+        // Initialize after DOM is ready
+        this.initializeWhenReady();
+    }
+    
+    initializeWhenReady() {
+        // Double-check DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
         } else {
-            console.error('Essential DOM elements not found. Check your HTML structure.');
+            this.init();
         }
     }
     
-    // Initialize DOM elements with proper null checking
-    initializeElements() {
-        // Audio elements
+    init() {
+        console.log('Initializing Alhambra Quran App...');
+        
+        // Get DOM elements safely
+        this.getDOMElements();
+        
+        // Only proceed if essential elements exist
+        if (this.audioPlayer && this.chaptersGrid) {
+            this.setupEventListeners();
+            this.loadChapters();
+            this.showToast('Quran Reader initialized successfully');
+            console.log('App initialized successfully');
+        } else {
+            console.error('Essential elements missing. Check HTML structure.');
+            this.showFallbackMessage();
+        }
+    }
+    
+    getDOMElements() {
+        // Core elements
         this.audioPlayer = document.getElementById('audioPlayer');
+        this.chaptersGrid = document.getElementById('chaptersGrid');
+        this.versesContainer = document.getElementById('versesContainer');
+        
+        // Audio controls
         this.playPauseBtn = document.getElementById('playPauseBtn');
         this.prevVerseBtn = document.getElementById('prevVerseBtn');
         this.nextVerseBtn = document.getElementById('nextVerseBtn');
@@ -40,12 +63,24 @@ class AlhambraQuranApp {
         this.currentTimeSpan = document.getElementById('currentTime');
         this.durationSpan = document.getElementById('duration');
         
-        // Main content elements
-        this.chaptersGrid = document.getElementById('chaptersGrid');
-        this.versesContainer = document.getElementById('versesContainer');
+        // Chapter display
         this.chapterTitleArabic = document.getElementById('chapterTitleArabic');
         this.chapterTitleEnglish = document.getElementById('chapterTitleEnglish');
         this.chapterTranslation = document.getElementById('chapterTranslation');
+        
+        // Navigation
+        this.homeBtn = document.getElementById('homeBtn');
+        this.bookmarksBtn = document.getElementById('bookmarksBtn');
+        this.highlightsBtn = document.getElementById('highlightsBtn');
+        this.backBtn = document.getElementById('backBtn');
+        
+        // Sections
+        this.chapterList = document.getElementById('chapterList');
+        this.chapterReader = document.getElementById('chapterReader');
+        this.bookmarksSection = document.getElementById('bookmarksSection');
+        this.highlightsSection = document.getElementById('highlightsSection');
+        this.bookmarksList = document.getElementById('bookmarksList');
+        this.highlightsList = document.getElementById('highlightsList');
         
         // Status elements
         this.audioLoading = document.getElementById('audioLoading');
@@ -54,83 +89,38 @@ class AlhambraQuranApp {
         this.toast = document.getElementById('toast');
         this.toastMessage = document.getElementById('toastMessage');
         
-        // Navigation elements
-        this.homeBtn = document.getElementById('homeBtn');
-        this.bookmarksBtn = document.getElementById('bookmarksBtn');
-        this.highlightsBtn = document.getElementById('highlightsBtn');
-        this.backBtn = document.getElementById('backBtn');
-        
-        // Section elements
-        this.chapterList = document.getElementById('chapterList');
-        this.chapterReader = document.getElementById('chapterReader');
-        this.bookmarksSection = document.getElementById('bookmarksSection');
-        this.highlightsSection = document.getElementById('highlightsSection');
-        this.bookmarksList = document.getElementById('bookmarksList');
-        this.highlightsList = document.getElementById('highlightsList');
-    }
-    
-    // Check if essential elements exist
-    hasEssentialElements() {
-        const essential = [
-            this.audioPlayer,
-            this.playPauseBtn,
-            this.chaptersGrid,
-            this.versesContainer
-        ];
-        
-        return essential.every(element => element !== null);
-    }
-    
-    init() {
-        this.setupEventListeners();
-        this.loadChapters();
-        this.showToast('Quran Reader initialized with Al-Afasy recitation');
-        console.log('Alhambra Quran App initialized successfully');
+        console.log('DOM elements loaded:', {
+            audioPlayer: !!this.audioPlayer,
+            chaptersGrid: !!this.chaptersGrid,
+            playPauseBtn: !!this.playPauseBtn
+        });
     }
     
     setupEventListeners() {
-        // Navigation buttons (with null checks)
-        if (this.homeBtn) {
-            this.homeBtn.addEventListener('click', () => this.showChapterList());
-        }
-        if (this.bookmarksBtn) {
-            this.bookmarksBtn.addEventListener('click', () => this.showBookmarks());
-        }
-        if (this.highlightsBtn) {
-            this.highlightsBtn.addEventListener('click', () => this.showHighlights());
-        }
-        if (this.backBtn) {
-            this.backBtn.addEventListener('click', () => this.showChapterList());
-        }
+        // Navigation
+        this.addSafeListener(this.homeBtn, 'click', () => this.showChapterList());
+        this.addSafeListener(this.bookmarksBtn, 'click', () => this.showBookmarks());
+        this.addSafeListener(this.highlightsBtn, 'click', () => this.showHighlights());
+        this.addSafeListener(this.backBtn, 'click', () => this.showChapterList());
         
-        // Audio controls (with null checks)
-        if (this.playPauseBtn) {
-            this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
-        }
-        if (this.prevVerseBtn) {
-            this.prevVerseBtn.addEventListener('click', () => this.previousVerse());
-        }
-        if (this.nextVerseBtn) {
-            this.nextVerseBtn.addEventListener('click', () => this.nextVerse());
-        }
-        if (this.speedSelect) {
-            this.speedSelect.addEventListener('change', (e) => {
-                if (this.audioPlayer) {
-                    this.audioPlayer.playbackRate = parseFloat(e.target.value);
-                }
-            });
-        }
+        // Audio controls
+        this.addSafeListener(this.playPauseBtn, 'click', () => this.togglePlayPause());
+        this.addSafeListener(this.prevVerseBtn, 'click', () => this.previousVerse());
+        this.addSafeListener(this.nextVerseBtn, 'click', () => this.nextVerse());
+        this.addSafeListener(this.speedSelect, 'change', (e) => {
+            if (this.audioPlayer) {
+                this.audioPlayer.playbackRate = parseFloat(e.target.value);
+            }
+        });
         
-        // Progress slider (with null check)
-        if (this.progressSlider) {
-            this.progressSlider.addEventListener('input', (e) => {
-                if (this.audioPlayer && this.audioPlayer.duration) {
-                    this.audioPlayer.currentTime = (e.target.value / 100) * this.audioPlayer.duration;
-                }
-            });
-        }
+        // Progress control
+        this.addSafeListener(this.progressSlider, 'input', (e) => {
+            if (this.audioPlayer && this.audioPlayer.duration) {
+                this.audioPlayer.currentTime = (e.target.value / 100) * this.audioPlayer.duration;
+            }
+        });
         
-        // Audio event listeners (with null check)
+        // Audio events
         if (this.audioPlayer) {
             this.audioPlayer.addEventListener('loadstart', () => this.showAudioLoading());
             this.audioPlayer.addEventListener('canplay', () => this.hideAudioLoading());
@@ -143,12 +133,14 @@ class AlhambraQuranApp {
         }
     }
     
-    // Load and display chapters
-    loadChapters() {
-        if (!this.chaptersGrid) {
-            console.error('Chapters grid not found');
-            return;
+    addSafeListener(element, event, handler) {
+        if (element) {
+            element.addEventListener(event, handler);
         }
+    }
+    
+    loadChapters() {
+        if (!this.chaptersGrid) return;
         
         const chapters = this.getChapterData();
         this.chaptersGrid.innerHTML = '';
@@ -169,13 +161,11 @@ class AlhambraQuranApp {
         });
     }
     
-    // Load specific chapter with audio
     async loadChapter(chapterId) {
         try {
             this.showLoadingOverlay();
             this.hideAudioError();
             
-            // Get chapter data
             const chapterData = this.getChapterData().find(c => c.id === chapterId);
             if (!chapterData) {
                 throw new Error(`Chapter ${chapterId} not found`);
@@ -183,16 +173,11 @@ class AlhambraQuranApp {
             
             this.currentChapter = chapterData;
             
-            // Load chapter audio with timeout
+            // Load audio from QuranicAudio.com
             await this.loadChapterAudio(chapterId);
             
-            // Display chapter
             this.displayChapter(chapterData);
-            
-            // Load verses
             this.loadVerses(chapterId);
-            
-            // Show chapter reader
             this.showChapterReader();
             
             this.hideLoadingOverlay();
@@ -206,7 +191,6 @@ class AlhambraQuranApp {
         }
     }
     
-    // Load chapter audio with better error handling
     async loadChapterAudio(chapterId) {
         if (!this.audioPlayer) {
             throw new Error('Audio player not available');
@@ -218,15 +202,15 @@ class AlhambraQuranApp {
         console.log('Loading audio from:', audioUrl);
         
         return new Promise((resolve, reject) => {
-            // Set a timeout for loading
             const timeout = setTimeout(() => {
                 reject(new Error('Audio loading timed out'));
-            }, 15000); // 15 second timeout
+            }, 15000);
             
             const handleCanPlay = () => {
                 clearTimeout(timeout);
                 this.audioPlayer.removeEventListener('canplay', handleCanPlay);
                 this.audioPlayer.removeEventListener('error', handleError);
+                console.log('Audio loaded successfully');
                 resolve();
             };
             
@@ -234,18 +218,20 @@ class AlhambraQuranApp {
                 clearTimeout(timeout);
                 this.audioPlayer.removeEventListener('canplay', handleCanPlay);
                 this.audioPlayer.removeEventListener('error', handleError);
-                reject(new Error('Failed to load audio: ' + e.message));
+                console.error('Audio loading failed:', e);
+                reject(new Error('Failed to load audio'));
             };
             
             this.audioPlayer.addEventListener('canplay', handleCanPlay);
             this.audioPlayer.addEventListener('error', handleError);
             
+            // Clear any previous source to avoid conflicts
+            this.audioPlayer.src = '';
             this.audioPlayer.src = audioUrl;
             this.audioPlayer.load();
         });
     }
     
-    // Display chapter information
     displayChapter(chapterData) {
         if (this.chapterTitleArabic) {
             this.chapterTitleArabic.textContent = chapterData.arabic;
@@ -258,12 +244,8 @@ class AlhambraQuranApp {
         }
     }
     
-    // Load and display verses
     loadVerses(chapterId) {
-        if (!this.versesContainer) {
-            console.error('Verses container not found');
-            return;
-        }
+        if (!this.versesContainer) return;
         
         const verses = this.getVerseData(chapterId);
         this.verses = verses;
@@ -293,7 +275,7 @@ class AlhambraQuranApp {
         });
     }
     
-    // Audio control methods
+    // Audio controls
     togglePlayPause() {
         if (!this.audioPlayer) {
             this.showToast('Audio player not available');
@@ -305,47 +287,35 @@ class AlhambraQuranApp {
         } else {
             this.audioPlayer.play().catch(e => {
                 console.error('Playback failed:', e);
-                this.showToast('Playback failed. Please check your internet connection.');
+                this.showToast('Playback failed. Please try again.');
             });
         }
     }
     
     previousVerse() {
         if (!this.audioPlayer) return;
-        
-        if (this.audioPlayer.currentTime > 10) {
-            this.audioPlayer.currentTime -= 10;
-        } else {
-            this.audioPlayer.currentTime = 0;
-        }
+        this.audioPlayer.currentTime = Math.max(0, this.audioPlayer.currentTime - 10);
     }
     
     nextVerse() {
         if (!this.audioPlayer) return;
-        
         this.audioPlayer.currentTime = Math.min(
             this.audioPlayer.currentTime + 15, 
             this.audioPlayer.duration || 0
         );
     }
     
-    // Update progress and time displays
     updateProgress() {
         if (!this.audioPlayer || !this.audioPlayer.duration) return;
         
         const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
         
-        if (this.progressFill) {
-            this.progressFill.style.width = `${progress}%`;
-        }
-        if (this.progressSlider) {
-            this.progressSlider.value = progress;
-        }
+        if (this.progressFill) this.progressFill.style.width = `${progress}%`;
+        if (this.progressSlider) this.progressSlider.value = progress;
         if (this.currentTimeSpan) {
             this.currentTimeSpan.textContent = this.formatTime(this.audioPlayer.currentTime);
         }
         
-        // Basic verse highlighting
         this.highlightCurrentVerse();
     }
     
@@ -355,16 +325,13 @@ class AlhambraQuranApp {
         }
     }
     
-    // Basic verse highlighting based on progress
     highlightCurrentVerse() {
         if (this.verses.length === 0) return;
         
-        // Remove previous highlighting
         document.querySelectorAll('.verse-item').forEach(verse => {
             verse.classList.remove('playing');
         });
         
-        // Calculate approximate verse based on progress
         const progress = this.audioPlayer.currentTime / this.audioPlayer.duration;
         const estimatedVerseIndex = Math.floor(progress * this.verses.length);
         
@@ -376,14 +343,6 @@ class AlhambraQuranApp {
                 block: 'center' 
             });
         }
-    }
-    
-    // Utility methods
-    formatTime(seconds) {
-        if (isNaN(seconds)) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
     
     updatePlayButton(playing) {
@@ -399,8 +358,323 @@ class AlhambraQuranApp {
         if (this.progressFill) this.progressFill.style.width = '0%';
         if (this.progressSlider) this.progressSlider.value = 0;
         
-        // Remove all verse highlighting
         document.querySelectorAll('.verse-item').forEach(verse => {
             verse.classList.remove('playing');
         });
-        this
+        this.showToast('Chapter completed');
+    }
+    
+    // Utility methods
+    formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    loadFromStorage(key) {
+        try {
+            return JSON.parse(localStorage.getItem(key) || '{}');
+        } catch (e) {
+            console.error('Error loading from storage:', e);
+            return {};
+        }
+    }
+    
+    saveToStorage(key, data) {
+        try {
+            localStorage.setItem(key, JSON.stringify(data));
+        } catch (e) {
+            console.error('Error saving to storage:', e);
+        }
+    }
+    
+    // Bookmark and highlight functionality
+    toggleBookmark(chapterId, verseNumber) {
+        const key = `${chapterId}-${verseNumber}`;
+        if (this.bookmarks[key]) {
+            delete this.bookmarks[key];
+            this.showToast('Bookmark removed');
+        } else {
+            this.bookmarks[key] = {
+                chapterId,
+                verseNumber,
+                timestamp: new Date().toISOString()
+            };
+            this.showToast('Verse bookmarked');
+        }
+        this.saveToStorage('quran_bookmarks', this.bookmarks);
+        this.loadVerses(chapterId);
+    }
+    
+    toggleHighlight(chapterId, verseNumber) {
+        const key = `${chapterId}-${verseNumber}`;
+        if (this.highlights[key]) {
+            delete this.highlights[key];
+            this.showToast('Highlight removed');
+        } else {
+            this.highlights[key] = {
+                chapterId,
+                verseNumber,
+                timestamp: new Date().toISOString()
+            };
+            this.showToast('Verse highlighted');
+        }
+        this.saveToStorage('quran_highlights', this.highlights);
+        this.loadVerses(chapterId);
+    }
+    
+    isBookmarked(chapterId, verseNumber) {
+        return !!this.bookmarks[`${chapterId}-${verseNumber}`];
+    }
+    
+    isHighlighted(chapterId, verseNumber) {
+        return !!this.highlights[`${chapterId}-${verseNumber}`];
+    }
+    
+    // Navigation methods
+    showChapterList() {
+        this.hideAllSections();
+        if (this.chapterList) this.chapterList.classList.remove('hidden');
+        if (this.audioPlayer) this.audioPlayer.pause();
+    }
+    
+    showChapterReader() {
+        this.hideAllSections();
+        if (this.chapterReader) this.chapterReader.classList.remove('hidden');
+    }
+    
+    showBookmarks() {
+        this.hideAllSections();
+        if (this.bookmarksSection) this.bookmarksSection.classList.remove('hidden');
+        this.loadBookmarksList();
+    }
+    
+    showHighlights() {
+        this.hideAllSections();
+        if (this.highlightsSection) this.highlightsSection.classList.remove('hidden');
+        this.loadHighlightsList();
+    }
+    
+    hideAllSections() {
+        [this.chapterList, this.chapterReader, this.bookmarksSection, this.highlightsSection]
+            .forEach(section => {
+                if (section) section.classList.add('hidden');
+            });
+    }
+    
+    // UI state methods
+    showLoadingOverlay() {
+        if (this.loadingOverlay) this.loadingOverlay.classList.remove('hidden');
+    }
+    
+    hideLoadingOverlay() {
+        if (this.loadingOverlay) this.loadingOverlay.classList.add('hidden');
+    }
+    
+    showAudioLoading() {
+        if (this.audioLoading) this.audioLoading.style.display = 'block';
+    }
+    
+    hideAudioLoading() {
+        if (this.audioLoading) this.audioLoading.style.display = 'none';
+    }
+    
+    showAudioError() {
+        if (this.audioError) this.audioError.style.display = 'block';
+    }
+    
+    hideAudioError() {
+        if (this.audioError) this.audioError.style.display = 'none';
+    }
+    
+    handleAudioError(error) {
+        console.error('Audio error:', error);
+        this.hideAudioLoading();
+        this.showAudioError();
+        this.showToast('Failed to load audio from QuranicAudio.com');
+    }
+    
+    showToast(message) {
+        if (this.toastMessage && this.toast) {
+            this.toastMessage.textContent = message;
+            this.toast.classList.remove('hidden');
+            setTimeout(() => {
+                this.toast.classList.add('hidden');
+            }, 3000);
+        } else {
+            console.log('Toast:', message);
+        }
+    }
+    
+    showFallbackMessage() {
+        document.body.innerHTML += `
+            <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                        background: #f8f9fa; padding: 20px; border-radius: 10px; 
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; z-index: 9999;">
+                <h3>Quran Reader Setup</h3>
+                <p>Please check your HTML structure and ensure all required elements are present.</p>
+                <p>Elements needed: audioPlayer, chaptersGrid, playPauseBtn</p>
+            </div>
+        `;
+    }
+    
+    loadBookmarksList() {
+        if (!this.bookmarksList) return;
+        
+        this.bookmarksList.innerHTML = '';
+        const bookmarks = Object.values(this.bookmarks);
+        
+        if (bookmarks.length === 0) {
+            this.bookmarksList.innerHTML = '<p class="empty-state">No bookmarks yet. Start reading and bookmark your favorite verses!</p>';
+            return;
+        }
+        
+        bookmarks.forEach(bookmark => {
+            const chapterData = this.getChapterData().find(c => c.id === bookmark.chapterId);
+            const verseData = this.getVerseData(bookmark.chapterId).find(v => v.number === bookmark.verseNumber);
+            
+            if (chapterData && verseData) {
+                const bookmarkElement = document.createElement('div');
+                bookmarkElement.className = 'bookmark-item';
+                bookmarkElement.innerHTML = `
+                    <h4>${chapterData.name} - Verse ${bookmark.verseNumber}</h4>
+                    <p class="verse-arabic" dir="rtl">${verseData.arabic}</p>
+                    <p class="verse-english">${verseData.english}</p>
+                    <button onclick="quranApp.loadChapter(${bookmark.chapterId})">Go to Chapter</button>
+                `;
+                this.bookmarksList.appendChild(bookmarkElement);
+            }
+        });
+    }
+    
+    loadHighlightsList() {
+        if (!this.highlightsList) return;
+        
+        this.highlightsList.innerHTML = '';
+        const highlights = Object.values(this.highlights);
+        
+        if (highlights.length === 0) {
+            this.highlightsList.innerHTML = '<p class="empty-state">No highlights yet. Highlight verses that inspire you!</p>';
+            return;
+        }
+        
+        highlights.forEach(highlight => {
+            const chapterData = this.getChapterData().find(c => c.id === highlight.chapterId);
+            const verseData = this.getVerseData(highlight.chapterId).find(v => v.number === highlight.verseNumber);
+            
+            if (chapterData && verseData) {
+                const highlightElement = document.createElement('div');
+                highlightElement.className = 'highlight-item';
+                highlightElement.innerHTML = `
+                    <h4>${chapterData.name} - Verse ${highlight.verseNumber}</h4>
+                    <p class="verse-arabic" dir="rtl">${verseData.arabic}</p>
+                    <p class="verse-english">${verseData.english}</p>
+                    <button onclick="quranApp.loadChapter(${highlight.chapterId})">Go to Chapter</button>
+                `;
+                this.highlightsList.appendChild(highlightElement);
+            }
+        });
+    }
+    
+    // Sample data (based on QuranicAudio.com API structure)
+    getChapterData() {
+        return [
+            { 
+                id: 1, 
+                name: 'Al-Fatiha', 
+                arabic: 'الفاتحة', 
+                translation: 'The Opener',
+                verses: 7, 
+                type: 'Meccan' 
+            },
+            { 
+                id: 2, 
+                name: 'Al-Baqarah', 
+                arabic: 'البقرة', 
+                translation: 'The Cow',
+                verses: 286, 
+                type: 'Medinan' 
+            },
+            { 
+                id: 3, 
+                name: 'Al-Imran', 
+                arabic: 'آل عمران', 
+                translation: 'Family of Imran',
+                verses: 200, 
+                type: 'Medinan' 
+            },
+            { 
+                id: 4, 
+                name: 'An-Nisa', 
+                arabic: 'النساء', 
+                translation: 'The Women',
+                verses: 176, 
+                type: 'Medinan' 
+            },
+            { 
+                id: 5, 
+                name: 'Al-Maidah', 
+                arabic: 'المائدة', 
+                translation: 'The Table Spread',
+                verses: 120, 
+                type: 'Medinan' 
+            }
+        ];
+    }
+    
+    getVerseData(chapterId) {
+        // Al-Fatiha verses
+        if (chapterId === 1) {
+            return [
+                {
+                    number: 1,
+                    arabic: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                    english: 'In the name of Allah, the Entirely Merciful, the Especially Merciful.'
+                },
+                {
+                    number: 2,
+                    arabic: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
+                    english: 'All praise is due to Allah, Lord of the worlds.'
+                },
+                {
+                    number: 3,
+                    arabic: 'الرَّحْمَٰنِ الرَّحِيمِ',
+                    english: 'The Entirely Merciful, the Especially Merciful,'
+                },
+                {
+                    number: 4,
+                    arabic: 'مَالِكِ يَوْمِ الدِّينِ',
+                    english: 'Sovereign of the Day of Recompense.'
+                },
+                {
+                    number: 5,
+                    arabic: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
+                    english: 'It is You we worship and You we ask for help.'
+                },
+                {
+                    number: 6,
+                    arabic: 'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
+                    english: 'Guide us to the straight path -'
+                },
+                {
+                    number: 7,
+                    arabic: 'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
+                    english: 'The path of those upon whom You have bestowed favor, not of those who have evoked anger or of those who are astray.'
+                }
+            ];
+        }
+        
+        return [{
+            number: 1,
+            arabic: 'Sample Arabic text for this chapter...',
+            english: 'Sample English translation will be loaded here...'
+        }];
+    }
+}
+
+// Initialize the app
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Starting Quran app...');
+    window.quranApp = new AlhambraQuranApp();
+});
