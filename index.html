@@ -8,28 +8,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Add this to your existing index.html -->
-<div id="audio-player" class="audio-player">
-    <div id="chapter-info">
-        <h2 id="chapter-title">Select a Chapter</h2>
-        <p id="chapter-arabic"></p>
-    </div>
-    
-    <audio id="quran-audio" controls>
-        Your browser does not support audio playback.
-    </audio>
-    
-    <div id="loading" style="display: none;">Loading audio...</div>
-    <div id="error-message" style="display: none;"></div>
-    
-    <select id="chapter-selector">
-        <option value="">Choose a Chapter</option>
-        <option value="1">1. Al-Fatiha (الفاتحة)</option>
-        <option value="2">2. Al-Baqarah (البقرة)</option>
-        <option value="3">3. Al-Imran (آل عمران)</option>
-        <!-- We'll add more chapters later -->
-    </select>
-</div>
 
     <!-- Header -->
     <header class="header">
@@ -81,6 +59,7 @@
 
                 <!-- Audio Controls -->
                 <div class="audio-controls">
+                     <div class="audio-loading" id="audioLoading" style="display: none;">🎵 Loading audio...</div>
                     <div class="playback-controls">
                         <button class="control-btn" id="prevVerseBtn" title="Previous Verse">⏮</button>
                         <button class="control-btn play-pause-btn" id="playPauseBtn" title="Play/Pause">▶</button>
@@ -107,14 +86,18 @@
                         </select>
                     </div>
                 </div>
-
+                    <!-- Error Message -->
+                <div class="audio-error" id="audioError" style="display: none; color: #D2691E; text-align: center; padding: 10px;">
+                    Unable to load audio. Please check your connection.
+                </div>
+                
                 <!-- Verses Container -->
                 <div class="verses-container" id="versesContainer">
                     <!-- Verses will be dynamically loaded here -->
                 </div>
 
                 <!-- Audio Element -->
-                <audio id="audioPlayer" preload="metadata"></audio>
+              <audio id="audioPlayer" preload="metadata" crossorigin="anonymous"></audio>
             </section>
 
             <!-- Bookmarks View -->
