@@ -1,909 +1,583 @@
 // Quran Reader Application - Islamic Design
 // Complete functionality with bookmarks, highlights, and audio synchronization
 
-// Simple Quran Audio Player for Beginners
-class SimpleQuranPlayer {
+// Integrated Quran App with QuranicAudio.com API
+class AlhambraQuranApp {
     constructor() {
-        // This is the base URL from QuranicAudio.com API
-        this.baseUrl = 'https://download.quranicaudio.com/quran/';
-        this.alAfasyPath = 'mishaari_raashid_al_3afaasee/'; // Al-Afasy's path
+        // QuranicAudio.com API configuration
+        this.baseAudioUrl = 'https://download.quranicaudio.com/quran/';
+        this.reciterPath = 'mishaari_raashid_al_3afaasee/'; // Al-Afasy
         
-        // Get HTML elements
-        this.audio = document.getElementById('quran-audio');
-        this.chapterTitle = document.getElementById('chapter-title');
-        this.chapterArabic = document.getElementById('chapter-arabic');
-        this.loading = document.getElementById('loading');
-        this.errorMessage = document.getElementById('error-message');
-        this.chapterSelector = document.getElementById('chapter-selector');
+        // App state
+        this.currentChapter = null;
+        this.currentVerseIndex = 0;
+        this.isPlaying = false;
+        this.verses = [];
+        this.bookmarks = JSON.parse(localStorage.getItem('quran_bookmarks') || '{}');
+        this.highlights = JSON.parse(localStorage.getItem('quran_highlights') || '{}');
         
-        this.setupEventListeners();
-    }
-    
-    // This function sets up all the button clicks and audio events
-    setupEventListeners() {
-        // When user selects a chapter from dropdown
-        this.chapterSelector.addEventListener('change', (e) => {
-            const chapterNumber = e.target.value;
-            if (chapterNumber) {
-                this.loadChapter(parseInt(chapterNumber));
-            }
-        });
+        // Get all your existing HTML elements
+        this.audioPlayer = document.getElementById('audioPlayer');
+        this.playPauseBtn = document.getElementById('playPauseBtn');
+        this.prevVerseBtn = document.getElementById('prevVerseBtn');
+        this.nextVerseBtn = document.getElementById('nextVerseBtn');
+        this.speedSelect = document.getElementById('speedSelect');
+        this.progressFill = document.getElementById('progressFill');
+        this.progressSlider = document.getElementById('progressSlider');
+        this.currentTimeSpan = document.getElementById('currentTime');
+        this.durationSpan = document.getElementById('duration');
+        this.chaptersGrid = document.getElementById('chaptersGrid');
+        this.versesContainer = document.getElementById('versesContainer');
+        this.chapterTitleArabic = document.getElementById('chapterTitleArabic');
+        this.chapterTitleEnglish = document.getElementById('chapterTitleEnglish');
+        this.chapterTranslation = document.getElementById('chapterTranslation');
+        this.audioLoading = document.getElementById('audioLoading');
+        this.audioError = document.getElementById('audioError');
+        this.loadingOverlay = document.getElementById('loadingOverlay');
+        this.toast = document.getElementById('toast');
+        this.toastMessage = document.getElementById('toastMessage');
         
-        // When audio starts loading
-        this.audio.addEventListener('loadstart', () => {
-            this.showLoading();
-        });
+        // Navigation elements
+        this.homeBtn = document.getElementById('homeBtn');
+        this.bookmarksBtn = document.getElementById('bookmarksBtn');
+        this.highlightsBtn = document.getElementById('highlightsBtn');
+        this.backBtn = document.getElementById('backBtn');
         
-        // When audio is ready to play
-        this.audio.addEventListener('canplay', () => {
-            this.hideLoading();
-            console.log('Audio is ready to play!');
-        });
+        // Section elements
+        this.chapterList = document.getElementById('chapterList');
+        this.chapterReader = document.getElementById('chapterReader');
+        this.bookmarksSection = document.getElementById('bookmarksSection');
+        this.highlightsSection = document.getElementById('highlightsSection');
         
-        // If there's an error loading audio
-        this.audio.addEventListener('error', () => {
-            this.showError('Could not load audio. Please try again.');
-        });
-    }
-    
-    // This function loads a specific chapter
-    loadChapter(chapterNumber) {
-        console.log(`Loading chapter ${chapterNumber}`);
-        
-        // Clear any previous errors
-        this.hideError();
-        
-        // Get chapter information
-        const chapterInfo = this.getChapterInfo(chapterNumber);
-        
-        // Update the display
-        this.updateChapterDisplay(chapterInfo);
-        
-        // Build the audio URL
-        const audioUrl = this.buildAudioUrl(chapterNumber);
-        console.log('Audio URL:', audioUrl);
-        
-        // Load the audio
-        this.audio.src = audioUrl;
-        this.audio.load();
-    }
-    
-    // This function creates the audio URL
-    buildAudioUrl(chapterNumber) {
-        // Convert chapter number to 3-digit format (1 becomes 001)
-        const paddedNumber = chapterNumber.toString().padStart(3, '0');
-        
-        // Combine all parts to make the full URL
-        return `${this.baseUrl}${this.alAfasyPath}${paddedNumber}.mp3`;
-    }
-    
-    // This function gets chapter information
-    getChapterInfo(chapterNumber) {
-        // Simple list of first few chapters - you can expand this later
-        const chapters = {
-            1: { name: 'Al-Fatiha', arabic: 'الفاتحة', english: 'The Opener' },
-            2: { name: 'Al-Baqarah', arabic: 'البقرة', english: 'The Cow' },
-            3: { name: 'Al-Imran', arabic: 'آل عمران', english: 'Family of Imran' }
-        };
-        
-        return chapters[chapterNumber] || { name: 'Unknown Chapter', arabic: '', english: '' };
-    }
-    
-    // This function updates what the user sees
-    updateChapterDisplay(chapterInfo) {
-        this.chapterTitle.textContent = `${chapterInfo.name} - ${chapterInfo.english}`;
-        this.chapterArabic.textContent = chapterInfo.arabic;
-    }
-    
-    // Show loading message
-    showLoading() {
-        this.loading.style.display = 'block';
-        this.hideError();
-    }
-    
-    // Hide loading message
-    hideLoading() {
-        this.loading.style.display = 'none';
-    }
-    
-    // Show error message
-    showError(message) {
-        this.errorMessage.textContent = message;
-        this.errorMessage.style.display = 'block';
-        this.hideLoading();
-    }
-    
-    // Hide error message
-    hideError() {
-        this.errorMessage.style.display = 'none';
-    }
-}
-
-// Start the app when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Starting Quran app...');
-    const player = new SimpleQuranPlayer();
-    
-    // Automatically load Al-Fatiha as a test
-    setTimeout(() => {
-        player.loadChapter(1);
-    }, 1000);
-});
-
-class QuranReader {
-    constructor() {
-        // Application data
-        this.data = {
-            chapters: [
-                {
-                    id: 1,
-                    name_arabic: "الفَاتِحَة",
-                    name_english: "Al-Fatihah",
-                    name_translation: "The Opening",
-                    verses_count: 7,
-                    audio_url: "https://www.soundjay.com/misc/bell-ringing-05.wav"
-                },
-                {
-                    id: 2,
-                    name_arabic: "البَقَرَة",
-                    name_english: "Al-Baqarah",
-                    name_translation: "The Cow",
-                    verses_count: 286,
-                    audio_url: "https://www.soundjay.com/misc/bell-ringing-05.wav"
-                },
-                {
-                    id: 3,
-                    name_arabic: "آل عِمرَان",
-                    name_english: "Al-Imran",
-                    name_translation: "The Family of Imran",
-                    verses_count: 200,
-                    audio_url: "https://www.soundjay.com/misc/bell-ringing-05.wav"
-                }
-            ],
-            verses: {
-                "1": [
-                    {
-                        verse_number: 1,
-                        arabic: "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ",
-                        translation: "In the name of Allah, The Most Gracious and The Most Merciful",
-                        audio_start: 0,
-                        audio_end: 3.5
-                    },
-                    {
-                        verse_number: 2,
-                        arabic: "ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ",
-                        translation: "All praise and gratitude belong to Allah, The Sustainer of all the worlds",
-                        audio_start: 3.5,
-                        audio_end: 7.8
-                    },
-                    {
-                        verse_number: 3,
-                        arabic: "ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ",
-                        translation: "The Most Gracious, The Most Merciful",
-                        audio_start: 7.8,
-                        audio_end: 10.2
-                    },
-                    {
-                        verse_number: 4,
-                        arabic: "مَٰلِكِ يَوۡمِ ٱلدِّينِ",
-                        translation: "Master of the Day of Judgment",
-                        audio_start: 10.2,
-                        audio_end: 13.1
-                    },
-                    {
-                        verse_number: 5,
-                        arabic: "إِيَّاكَ نَعۡبُدُ وَإِيَّاكَ نَسۡتَعِينُ",
-                        translation: "You alone we worship, and You alone we ask for help",
-                        audio_start: 13.1,
-                        audio_end: 17.4
-                    },
-                    {
-                        verse_number: 6,
-                        arabic: "ٱهۡدِنَا ٱلصِّرَٰطَ ٱلۡمُسۡتَقِيمَ",
-                        translation: "Guide us to the straight path",
-                        audio_start: 17.4,
-                        audio_end: 21.0
-                    },
-                    {
-                        verse_number: 7,
-                        arabic: "صِرَٰطَ ٱلَّذِينَ أَنۡعَمۡتَ عَلَيۡهِمۡ غَيۡرِ ٱلۡمَغۡضُوبِ عَلَيۡهِمۡ وَلَا ٱلضَّآلِّينَ",
-                        translation: "The path of those whom You have blessed; not of those who have incurred Your wrath, nor of those who have gone astray",
-                        audio_start: 21.0,
-                        audio_end: 28.5
-                    }
-                ]
-            }
-        };
-
-        // Application state
-        this.state = {
-            currentView: 'chapters',
-            currentChapter: null,
-            currentVerse: 0,
-            isPlaying: false,
-            playbackSpeed: 1.0,
-            bookmarks: this.loadFromStorage('bookmarks') || {},
-            highlights: this.loadFromStorage('highlights') || {},
-            audioLoaded: false,
-            simulatedTime: 0,
-            simulatedDuration: 30 // 30 seconds for demo
-        };
-
-        // DOM elements
-        this.elements = {};
-        this.audio = null;
-        this.simulationInterval = null;
-
-        // Initialize the application
         this.init();
     }
-
-    // Initialize the application
+    
     init() {
-        this.bindElements();
-        this.bindEvents();
-        this.renderChapterList();
-        this.loadBookmarks();
-        this.loadHighlights();
-        this.showToast('Welcome to the Noble Quran Reader');
+        this.setupEventListeners();
+        this.loadChapters();
+        this.showToast('Quran Reader initialized with Al-Afasy recitation');
+        console.log('Alhambra Quran App with Audio initialized');
     }
-
-    // Bind DOM elements
-    bindElements() {
-        this.elements = {
-            // Navigation
-            homeBtn: document.getElementById('homeBtn'),
-            bookmarksBtn: document.getElementById('bookmarksBtn'),
-            highlightsBtn: document.getElementById('highlightsBtn'),
-            backBtn: document.getElementById('backBtn'),
-
-            // Sections
-            chapterList: document.getElementById('chapterList'),
-            chapterReader: document.getElementById('chapterReader'),
-            bookmarksSection: document.getElementById('bookmarksSection'),
-            highlightsSection: document.getElementById('highlightsSection'),
-
-            // Chapter list
-            chaptersGrid: document.getElementById('chaptersGrid'),
-
-            // Reader
-            chapterTitleArabic: document.getElementById('chapterTitleArabic'),
-            chapterTitleEnglish: document.getElementById('chapterTitleEnglish'),
-            chapterTranslation: document.getElementById('chapterTranslation'),
-            versesContainer: document.getElementById('versesContainer'),
-
-            // Audio controls
-            audioPlayer: document.getElementById('audioPlayer'),
-            playPauseBtn: document.getElementById('playPauseBtn'),
-            prevVerseBtn: document.getElementById('prevVerseBtn'),
-            nextVerseBtn: document.getElementById('nextVerseBtn'),
-            progressSlider: document.getElementById('progressSlider'),
-            progressFill: document.getElementById('progressFill'),
-            currentTime: document.getElementById('currentTime'),
-            duration: document.getElementById('duration'),
-            speedSelect: document.getElementById('speedSelect'),
-
-            // Bookmarks and highlights
-            bookmarksList: document.getElementById('bookmarksList'),
-            highlightsList: document.getElementById('highlightsList'),
-
-            // Toast and loading
-            toast: document.getElementById('toast'),
-            toastMessage: document.getElementById('toastMessage'),
-            loadingOverlay: document.getElementById('loadingOverlay')
-        };
-
-        this.audio = this.elements.audioPlayer;
-    }
-
-    // Bind event listeners
-    bindEvents() {
-        // Navigation events
-        this.elements.homeBtn.addEventListener('click', () => this.showChapterList());
-        this.elements.bookmarksBtn.addEventListener('click', () => this.showBookmarks());
-        this.elements.highlightsBtn.addEventListener('click', () => this.showHighlights());
-        this.elements.backBtn.addEventListener('click', () => this.showChapterList());
-
-        // Audio control events
-        this.elements.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
-        this.elements.prevVerseBtn.addEventListener('click', () => this.previousVerse());
-        this.elements.nextVerseBtn.addEventListener('click', () => this.nextVerse());
-        this.elements.speedSelect.addEventListener('change', (e) => this.changePlaybackSpeed(e.target.value));
-        this.elements.progressSlider.addEventListener('input', (e) => this.seekAudio(e.target.value));
-
-        // Audio events - with fallback handling
-        this.audio.addEventListener('loadedmetadata', () => {
-            this.state.audioLoaded = true;
-            this.updateDuration();
-            this.hideLoading();
-        });
-        this.audio.addEventListener('timeupdate', () => this.updateProgress());
-        this.audio.addEventListener('ended', () => this.nextVerse());
-        this.audio.addEventListener('loadstart', () => this.showLoading());
-        this.audio.addEventListener('canplay', () => {
-            this.state.audioLoaded = true;
-            this.hideLoading();
-        });
-        this.audio.addEventListener('error', () => this.handleAudioError());
-
-        // Add timeout for audio loading
-        this.audio.addEventListener('loadstart', () => {
-            setTimeout(() => {
-                if (!this.state.audioLoaded) {
-                    this.handleAudioError();
-                }
-            }, 5000); // 5 second timeout
-        });
-    }
-
-    // Navigation methods
-    showView(viewName) {
-        // Hide all sections
-        document.querySelectorAll('section').forEach(section => {
-            section.classList.add('hidden');
-        });
-
-        // Show selected section
-        switch(viewName) {
-            case 'chapters':
-                this.elements.chapterList.classList.remove('hidden');
-                break;
-            case 'reader':
-                this.elements.chapterReader.classList.remove('hidden');
-                break;
-            case 'bookmarks':
-                this.elements.bookmarksSection.classList.remove('hidden');
-                break;
-            case 'highlights':
-                this.elements.highlightsSection.classList.remove('hidden');
-                break;
-        }
-
-        this.state.currentView = viewName;
-    }
-
-    showChapterList() {
-        this.showView('chapters');
-        this.pauseAudio();
-    }
-
-    showBookmarks() {
-        this.showView('bookmarks');
-        this.renderBookmarks();
-    }
-
-    showHighlights() {
-        this.showView('highlights');
-        this.renderHighlights();
-    }
-
-    // Chapter list rendering
-    renderChapterList() {
-        const chaptersHTML = this.data.chapters.map(chapter => {
-            const bookmark = this.state.bookmarks[chapter.id];
-            const bookmarkText = bookmark ? `📖 Verse ${bookmark.verse}` : '';
-            
-            return `
-                <div class="chapter-card" data-chapter-id="${chapter.id}">
-                    <div class="chapter-number">${chapter.id}</div>
-                    <div class="chapter-name-arabic">${chapter.name_arabic}</div>
-                    <div class="chapter-name-english">${chapter.name_english}</div>
-                    <div class="chapter-translation">${chapter.name_translation}</div>
-                    <div class="chapter-meta">
-                        <span>${chapter.verses_count} verses</span>
-                        <span class="bookmark-indicator">${bookmarkText}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        this.elements.chaptersGrid.innerHTML = chaptersHTML;
-
-        // Add click events to chapter cards
-        document.querySelectorAll('.chapter-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                const chapterId = parseInt(e.currentTarget.dataset.chapterId);
-                this.openChapter(chapterId);
-            });
-        });
-    }
-
-    // Chapter reader
-    openChapter(chapterId) {
-        this.showLoading();
+    
+    setupEventListeners() {
+        // Navigation buttons
+        this.homeBtn.addEventListener('click', () => this.showChapterList());
+        this.bookmarksBtn.addEventListener('click', () => this.showBookmarks());
+        this.highlightsBtn.addEventListener('click', () => this.showHighlights());
+        this.backBtn.addEventListener('click', () => this.showChapterList());
         
-        const chapter = this.data.chapters.find(c => c.id === chapterId);
-        if (!chapter) {
-            this.showToast('Chapter not found');
-            this.hideLoading();
-            return;
-        }
-
-        this.state.currentChapter = chapter;
-        this.state.audioLoaded = false;
-        this.state.simulatedTime = 0;
+        // Audio controls
+        this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
+        this.prevVerseBtn.addEventListener('click', () => this.previousVerse());
+        this.nextVerseBtn.addEventListener('click', () => this.nextVerse());
+        this.speedSelect.addEventListener('change', (e) => {
+            this.audioPlayer.playbackRate = parseFloat(e.target.value);
+        });
         
-        // Load bookmarked position
-        const bookmark = this.state.bookmarks[chapterId];
-        this.state.currentVerse = bookmark ? bookmark.verse - 1 : 0;
-
-        // Update chapter info
-        this.elements.chapterTitleArabic.textContent = chapter.name_arabic;
-        this.elements.chapterTitleEnglish.textContent = chapter.name_english;
-        this.elements.chapterTranslation.textContent = chapter.name_translation;
-
-        // Attempt to load audio
-        this.audio.src = chapter.audio_url;
-        this.audio.playbackRate = this.state.playbackSpeed;
-
-        // Set simulated duration for demo
-        this.elements.duration.textContent = this.formatTime(this.state.simulatedDuration);
-
-        // Render verses
-        this.renderVerses(chapterId);
-        
-        this.showView('reader');
-        
-        // Hide loading after a short delay if audio doesn't load
-        setTimeout(() => {
-            if (!this.state.audioLoaded) {
-                this.hideLoading();
-                this.showToast('Audio demo mode - click play to simulate playback');
+        // Progress slider
+        this.progressSlider.addEventListener('input', (e) => {
+            if (this.audioPlayer.duration) {
+                this.audioPlayer.currentTime = (e.target.value / 100) * this.audioPlayer.duration;
             }
-        }, 2000);
+        });
         
-        this.updateActiveVerse();
+        // Audio event listeners
+        this.audioPlayer.addEventListener('loadstart', () => this.showAudioLoading());
+        this.audioPlayer.addEventListener('canplay', () => this.hideAudioLoading());
+        this.audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
+        this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
+        this.audioPlayer.addEventListener('ended', () => this.audioEnded());
+        this.audioPlayer.addEventListener('error', (e) => this.handleAudioError(e));
+        this.audioPlayer.addEventListener('play', () => this.updatePlayButton(true));
+        this.audioPlayer.addEventListener('pause', () => this.updatePlayButton(false));
     }
-
-    renderVerses(chapterId) {
-        const verses = this.data.verses[chapterId.toString()] || [];
+    
+    // Load and display chapters
+    loadChapters() {
+        const chapters = this.getChapterData();
+        this.chaptersGrid.innerHTML = '';
         
-        const versesHTML = verses.map(verse => {
-            const isHighlighted = this.isVerseHighlighted(chapterId, verse.verse_number);
-            const highlightClass = isHighlighted ? 'highlighted' : '';
-            
-            return `
-                <div class="verse-card ${highlightClass}" data-verse-number="${verse.verse_number}">
-                    <div class="verse-header">
-                        <div class="verse-number">${verse.verse_number}</div>
-                        <div class="verse-actions">
-                            <button class="verse-action-btn bookmark-btn" data-action="bookmark">
-                                📖 Bookmark
-                            </button>
-                            <button class="verse-action-btn highlight-btn ${isHighlighted ? 'active' : ''}" data-action="highlight">
-                                ✨ Highlight
-                            </button>
-                        </div>
-                    </div>
-                    <div class="verse-arabic">${verse.arabic}</div>
-                    <div class="verse-translation">${verse.translation}</div>
-                </div>
+        chapters.forEach(chapter => {
+            const chapterCard = document.createElement('div');
+            chapterCard.className = 'chapter-card';
+            chapterCard.innerHTML = `
+                <div class="chapter-number">${chapter.id}</div>
+                <h3 class="chapter-name-arabic">${chapter.arabic}</h3>
+                <h4 class="chapter-name-english">${chapter.name}</h4>
+                <p class="chapter-info">${chapter.verses} verses • ${chapter.type}</p>
+                <div class="chapter-translation">"${chapter.translation}"</div>
             `;
-        }).join('');
-
-        this.elements.versesContainer.innerHTML = versesHTML;
-
-        // Add click events to verse action buttons
-        document.querySelectorAll('.verse-action-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const action = e.target.dataset.action;
-                const verseCard = e.target.closest('.verse-card');
-                const verseNumber = parseInt(verseCard.dataset.verseNumber);
-                
-                if (action === 'bookmark') {
-                    this.bookmarkVerse(chapterId, verseNumber);
-                } else if (action === 'highlight') {
-                    this.toggleHighlight(chapterId, verseNumber);
-                }
-            });
-        });
-
-        // Add click events to verses for seeking
-        document.querySelectorAll('.verse-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                const verseNumber = parseInt(e.currentTarget.dataset.verseNumber);
-                this.seekToVerse(verseNumber - 1);
-            });
+            
+            chapterCard.addEventListener('click', () => this.loadChapter(chapter.id));
+            this.chaptersGrid.appendChild(chapterCard);
         });
     }
-
-    // Audio controls with fallback simulation
+    
+    // Load specific chapter with audio
+    async loadChapter(chapterId) {
+        try {
+            this.showLoadingOverlay();
+            this.hideAudioError();
+            
+            // Get chapter data
+            const chapterData = this.getChapterData().find(c => c.id === chapterId);
+            this.currentChapter = chapterData;
+            
+            // Load chapter audio
+            await this.loadChapterAudio(chapterId);
+            
+            // Display chapter
+            this.displayChapter(chapterData);
+            
+            // Load verses
+            this.loadVerses(chapterId);
+            
+            // Show chapter reader
+            this.showChapterReader();
+            
+            this.hideLoadingOverlay();
+            this.showToast(`Loaded: ${chapterData.name}`);
+            
+        } catch (error) {
+            console.error('Error loading chapter:', error);
+            this.hideLoadingOverlay();
+            this.showAudioError();
+            this.showToast('Failed to load chapter audio');
+        }
+    }
+    
+    // Load chapter audio from QuranicAudio.com
+    async loadChapterAudio(chapterId) {
+        const paddedId = chapterId.toString().padStart(3, '0');
+        const audioUrl = `${this.baseAudioUrl}${this.reciterPath}${paddedId}.mp3`;
+        
+        console.log('Loading audio from:', audioUrl);
+        
+        return new Promise((resolve, reject) => {
+            this.audioPlayer.src = audioUrl;
+            this.audioPlayer.load();
+            
+            const handleCanPlay = () => {
+                this.audioPlayer.removeEventListener('canplay', handleCanPlay);
+                this.audioPlayer.removeEventListener('error', handleError);
+                resolve();
+            };
+            
+            const handleError = (e) => {
+                this.audioPlayer.removeEventListener('canplay', handleCanPlay);
+                this.audioPlayer.removeEventListener('error', handleError);
+                reject(e);
+            };
+            
+            this.audioPlayer.addEventListener('canplay', handleCanPlay);
+            this.audioPlayer.addEventListener('error', handleError);
+        });
+    }
+    
+    // Display chapter information
+    displayChapter(chapterData) {
+        this.chapterTitleArabic.textContent = chapterData.arabic;
+        this.chapterTitleEnglish.textContent = `${chapterData.id}. ${chapterData.name}`;
+        this.chapterTranslation.textContent = `"${chapterData.translation}" • ${chapterData.verses} verses • ${chapterData.type}`;
+    }
+    
+    // Load and display verses
+    loadVerses(chapterId) {
+        const verses = this.getVerseData(chapterId);
+        this.verses = verses;
+        this.versesContainer.innerHTML = '';
+        
+        verses.forEach((verse, index) => {
+            const verseElement = document.createElement('div');
+            verseElement.className = 'verse-item';
+            verseElement.id = `verse-${index}`;
+            verseElement.innerHTML = `
+                <div class="verse-header">
+                    <span class="verse-number">${verse.number}</span>
+                    <div class="verse-actions">
+                        <button class="action-btn bookmark-btn" onclick="quranApp.toggleBookmark(${chapterId}, ${verse.number})" title="Bookmark">
+                            ${this.isBookmarked(chapterId, verse.number) ? '🔖' : '📖'}
+                        </button>
+                        <button class="action-btn highlight-btn" onclick="quranApp.toggleHighlight(${chapterId}, ${verse.number})" title="Highlight">
+                            ${this.isHighlighted(chapterId, verse.number) ? '✨' : '⭐'}
+                        </button>
+                    </div>
+                </div>
+                <div class="verse-arabic" dir="rtl">${verse.arabic}</div>
+                <div class="verse-english">${verse.english}</div>
+            `;
+            
+            this.versesContainer.appendChild(verseElement);
+        });
+    }
+    
+    // Audio control methods
     togglePlayPause() {
-        if (this.state.isPlaying) {
-            this.pauseAudio();
+        if (this.isPlaying) {
+            this.audioPlayer.pause();
         } else {
-            this.playAudio();
-        }
-    }
-
-    playAudio() {
-        if (this.state.audioLoaded && this.audio.src) {
-            // Try to play actual audio
-            this.audio.play().then(() => {
-                this.state.isPlaying = true;
-                this.elements.playPauseBtn.innerHTML = '⏸';
-                this.startVerseSync();
-            }).catch(error => {
-                this.startSimulatedPlayback();
+            this.audioPlayer.play().catch(e => {
+                console.error('Playback failed:', e);
+                this.showToast('Playback failed. Please try again.');
             });
-        } else {
-            // Use simulated playback
-            this.startSimulatedPlayback();
         }
     }
-
-    startSimulatedPlayback() {
-        this.state.isPlaying = true;
-        this.elements.playPauseBtn.innerHTML = '⏸';
-        this.showToast('Demo mode: Simulating audio playback');
-        
-        // Start simulation interval
-        this.simulationInterval = setInterval(() => {
-            this.state.simulatedTime += 0.1 * this.state.playbackSpeed;
-            
-            if (this.state.simulatedTime >= this.state.simulatedDuration) {
-                this.nextVerse();
-                return;
-            }
-            
-            this.updateSimulatedProgress();
-            this.syncVerseWithSimulatedAudio();
-        }, 100);
-        
-        this.startVerseSync();
-    }
-
-    pauseAudio() {
-        if (this.state.audioLoaded && this.audio.src) {
-            this.audio.pause();
-        }
-        
-        if (this.simulationInterval) {
-            clearInterval(this.simulationInterval);
-            this.simulationInterval = null;
-        }
-        
-        this.state.isPlaying = false;
-        this.elements.playPauseBtn.innerHTML = '▶';
-    }
-
+    
     previousVerse() {
-        if (this.state.currentVerse > 0) {
-            this.seekToVerse(this.state.currentVerse - 1);
+        // Simple implementation: rewind 10 seconds or go to beginning
+        if (this.audioPlayer.currentTime > 10) {
+            this.audioPlayer.currentTime -= 10;
+        } else {
+            this.audioPlayer.currentTime = 0;
         }
     }
-
+    
     nextVerse() {
-        const verses = this.getCurrentVerses();
-        if (this.state.currentVerse < verses.length - 1) {
-            this.seekToVerse(this.state.currentVerse + 1);
-        } else {
-            this.pauseAudio();
-            this.showToast('Chapter completed');
-        }
+        // Simple implementation: forward 15 seconds
+        this.audioPlayer.currentTime = Math.min(
+            this.audioPlayer.currentTime + 15, 
+            this.audioPlayer.duration || 0
+        );
     }
-
-    seekToVerse(verseIndex) {
-        const verses = this.getCurrentVerses();
-        if (verseIndex >= 0 && verseIndex < verses.length) {
-            this.state.currentVerse = verseIndex;
-            const verse = verses[verseIndex];
-            
-            if (this.state.audioLoaded) {
-                this.audio.currentTime = verse.audio_start;
-            } else {
-                this.state.simulatedTime = verse.audio_start;
-            }
-            
-            this.updateActiveVerse();
-        }
-    }
-
-    seekAudio(percentage) {
-        const time = (percentage / 100) * this.state.simulatedDuration;
-        
-        if (this.state.audioLoaded && this.audio.duration) {
-            this.audio.currentTime = (percentage / 100) * this.audio.duration;
-        } else {
-            this.state.simulatedTime = time;
-        }
-    }
-
-    changePlaybackSpeed(speed) {
-        this.state.playbackSpeed = parseFloat(speed);
-        if (this.state.audioLoaded) {
-            this.audio.playbackRate = this.state.playbackSpeed;
-        }
-    }
-
-    // Verse synchronization with simulation support
-    startVerseSync() {
-        if (this.verseSyncInterval) {
-            clearInterval(this.verseSyncInterval);
-        }
-        
-        this.verseSyncInterval = setInterval(() => {
-            if (this.state.audioLoaded) {
-                this.syncVerseWithAudio();
-            } else {
-                this.syncVerseWithSimulatedAudio();
-            }
-        }, 100);
-    }
-
-    syncVerseWithAudio() {
-        if (!this.state.isPlaying) {
-            clearInterval(this.verseSyncInterval);
-            return;
-        }
-
-        const verses = this.getCurrentVerses();
-        const currentTime = this.audio.currentTime;
-        
-        this.updateVerseBasedOnTime(verses, currentTime);
-    }
-
-    syncVerseWithSimulatedAudio() {
-        if (!this.state.isPlaying) {
-            clearInterval(this.verseSyncInterval);
-            return;
-        }
-
-        const verses = this.getCurrentVerses();
-        this.updateVerseBasedOnTime(verses, this.state.simulatedTime);
-    }
-
-    updateVerseBasedOnTime(verses, currentTime) {
-        for (let i = 0; i < verses.length; i++) {
-            const verse = verses[i];
-            if (currentTime >= verse.audio_start && currentTime < verse.audio_end) {
-                if (this.state.currentVerse !== i) {
-                    this.state.currentVerse = i;
-                    this.updateActiveVerse();
-                }
-                break;
-            }
-        }
-    }
-
-    updateActiveVerse() {
-        // Remove active class from all verses
-        document.querySelectorAll('.verse-card').forEach(card => {
-            card.classList.remove('active');
-        });
-
-        // Add active class to current verse
-        const activeVerseCard = document.querySelector(`[data-verse-number="${this.state.currentVerse + 1}"]`);
-        if (activeVerseCard) {
-            activeVerseCard.classList.add('active');
-            activeVerseCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-
-    // Progress tracking with simulation support
+    
+    // Update progress and time displays
     updateProgress() {
-        const currentTime = this.state.audioLoaded ? this.audio.currentTime : this.state.simulatedTime;
-        const duration = this.state.audioLoaded ? this.audio.duration : this.state.simulatedDuration;
-        
-        if (duration) {
-            const percentage = (currentTime / duration) * 100;
-            this.elements.progressFill.style.width = percentage + '%';
-            this.elements.progressSlider.value = percentage;
-            this.elements.currentTime.textContent = this.formatTime(currentTime);
-        }
-    }
-
-    updateSimulatedProgress() {
-        const percentage = (this.state.simulatedTime / this.state.simulatedDuration) * 100;
-        this.elements.progressFill.style.width = percentage + '%';
-        this.elements.progressSlider.value = percentage;
-        this.elements.currentTime.textContent = this.formatTime(this.state.simulatedTime);
-    }
-
-    updateDuration() {
-        const duration = this.state.audioLoaded ? this.audio.duration : this.state.simulatedDuration;
-        this.elements.duration.textContent = this.formatTime(duration);
-    }
-
-    formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = Math.floor(seconds % 60);
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-
-    // Bookmarking
-    bookmarkVerse(chapterId, verseNumber) {
-        this.state.bookmarks[chapterId] = {
-            verse: verseNumber,
-            timestamp: Date.now(),
-            chapterName: this.state.currentChapter.name_english
-        };
-        
-        this.saveToStorage('bookmarks', this.state.bookmarks);
-        this.showToast('Verse bookmarked successfully');
-        this.renderChapterList(); // Update bookmark indicators
-    }
-
-    renderBookmarks() {
-        const bookmarks = Object.entries(this.state.bookmarks);
-        
-        if (bookmarks.length === 0) {
-            this.elements.bookmarksList.innerHTML = `
-                <div class="empty-state">
-                    <h3>No Bookmarks Yet</h3>
-                    <p>Start reading and bookmark verses to track your progress</p>
-                </div>
-            `;
-            return;
-        }
-
-        const bookmarksHTML = bookmarks.map(([chapterId, bookmark]) => {
-            const verse = this.getVerseText(parseInt(chapterId), bookmark.verse);
+        if (this.audioPlayer.duration) {
+            const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
+            this.progressFill.style.width = `${progress}%`;
+            this.progressSlider.value = progress;
             
-            return `
-                <div class="bookmark-item" data-chapter-id="${chapterId}" data-verse="${bookmark.verse}">
-                    <div class="bookmark-chapter">${bookmark.chapterName} - Verse ${bookmark.verse}</div>
-                    <div class="bookmark-verse">${verse ? verse.arabic : ''}</div>
-                    <div class="bookmark-translation">${verse ? verse.translation : ''}</div>
-                </div>
-            `;
-        }).join('');
-
-        this.elements.bookmarksList.innerHTML = bookmarksHTML;
-
-        // Add click events to bookmarks
-        document.querySelectorAll('.bookmark-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const chapterId = parseInt(e.currentTarget.dataset.chapterId);
-                const verseNumber = parseInt(e.currentTarget.dataset.verse);
-                this.openChapterAtVerse(chapterId, verseNumber - 1);
-            });
-        });
+            this.currentTimeSpan.textContent = this.formatTime(this.audioPlayer.currentTime);
+            
+            // Basic verse highlighting (can be enhanced with actual timing data)
+            this.highlightCurrentVerse();
+        }
     }
-
-    // Highlighting
-    toggleHighlight(chapterId, verseNumber) {
-        const key = `${chapterId}-${verseNumber}`;
+    
+    updateDuration() {
+        if (this.audioPlayer.duration) {
+            this.durationSpan.textContent = this.formatTime(this.audioPlayer.duration);
+        }
+    }
+    
+    // Basic verse highlighting based on progress
+    highlightCurrentVerse() {
+        if (this.verses.length === 0) return;
         
-        if (this.state.highlights[key]) {
-            delete this.state.highlights[key];
-            this.showToast('Highlight removed');
+        // Remove previous highlighting
+        document.querySelectorAll('.verse-item').forEach(verse => {
+            verse.classList.remove('playing');
+        });
+        
+        // Calculate approximate verse based on progress
+        const progress = this.audioPlayer.currentTime / this.audioPlayer.duration;
+        const estimatedVerseIndex = Math.floor(progress * this.verses.length);
+        
+        const currentVerseElement = document.getElementById(`verse-${estimatedVerseIndex}`);
+        if (currentVerseElement) {
+            currentVerseElement.classList.add('playing');
+            // Smooth scroll to current verse
+            currentVerseElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }
+    }
+    
+    // Utility methods
+    formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    updatePlayButton(playing) {
+        this.isPlaying = playing;
+        this.playPauseBtn.innerHTML = playing ? '⏸' : '▶';
+        this.playPauseBtn.title = playing ? 'Pause' : 'Play';
+    }
+    
+    audioEnded() {
+        this.updatePlayButton(false);
+        this.progressFill.style.width = '0%';
+        this.progressSlider.value = 0;
+        // Remove all verse highlighting
+        document.querySelectorAll('.verse-item').forEach(verse => {
+            verse.classList.remove('playing');
+        });
+        this.showToast('Chapter completed');
+    }
+    
+    // Bookmark and highlight functionality
+    toggleBookmark(chapterId, verseNumber) {
+        const key = `${chapterId}-${verseNumber}`;
+        if (this.bookmarks[key]) {
+            delete this.bookmarks[key];
+            this.showToast('Bookmark removed');
         } else {
-            const verse = this.getVerseText(chapterId, verseNumber);
-            this.state.highlights[key] = {
+            this.bookmarks[key] = {
                 chapterId,
                 verseNumber,
-                chapterName: this.state.currentChapter.name_english,
-                arabic: verse.arabic,
-                translation: verse.translation,
-                timestamp: Date.now()
+                timestamp: new Date().toISOString()
+            };
+            this.showToast('Verse bookmarked');
+        }
+        localStorage.setItem('quran_bookmarks', JSON.stringify(this.bookmarks));
+        this.loadVerses(chapterId); // Refresh to update icons
+    }
+    
+    toggleHighlight(chapterId, verseNumber) {
+        const key = `${chapterId}-${verseNumber}`;
+        if (this.highlights[key]) {
+            delete this.highlights[key];
+            this.showToast('Highlight removed');
+        } else {
+            this.highlights[key] = {
+                chapterId,
+                verseNumber,
+                timestamp: new Date().toISOString()
             };
             this.showToast('Verse highlighted');
         }
-        
-        this.saveToStorage('highlights', this.state.highlights);
-        this.renderVerses(chapterId); // Update highlighting
+        localStorage.setItem('quran_highlights', JSON.stringify(this.highlights));
+        this.loadVerses(chapterId); // Refresh to update icons
     }
-
-    isVerseHighlighted(chapterId, verseNumber) {
-        return !!this.state.highlights[`${chapterId}-${verseNumber}`];
+    
+    isBookmarked(chapterId, verseNumber) {
+        return !!this.bookmarks[`${chapterId}-${verseNumber}`];
     }
-
-    renderHighlights() {
-        const highlights = Object.values(this.state.highlights);
-        
-        if (highlights.length === 0) {
-            this.elements.highlightsList.innerHTML = `
-                <div class="empty-state">
-                    <h3>No Highlights Yet</h3>
-                    <p>Highlight verses that inspire you to create your personal collection</p>
-                </div>
-            `;
-            return;
-        }
-
-        const highlightsHTML = highlights.map(highlight => {
-            return `
-                <div class="highlight-item" data-chapter-id="${highlight.chapterId}" data-verse="${highlight.verseNumber}">
-                    <div class="bookmark-chapter">${highlight.chapterName} - Verse ${highlight.verseNumber}</div>
-                    <div class="bookmark-verse">${highlight.arabic}</div>
-                    <div class="bookmark-translation">${highlight.translation}</div>
-                </div>
-            `;
-        }).join('');
-
-        this.elements.highlightsList.innerHTML = highlightsHTML;
-
-        // Add click events to highlights
-        document.querySelectorAll('.highlight-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const chapterId = parseInt(e.currentTarget.dataset.chapterId);
-                const verseNumber = parseInt(e.currentTarget.dataset.verse);
-                this.openChapterAtVerse(chapterId, verseNumber - 1);
-            });
-        });
+    
+    isHighlighted(chapterId, verseNumber) {
+        return !!this.highlights[`${chapterId}-${verseNumber}`];
     }
-
-    // Utility methods
-    getCurrentVerses() {
-        if (!this.state.currentChapter) return [];
-        return this.data.verses[this.state.currentChapter.id.toString()] || [];
+    
+    // Navigation methods
+    showChapterList() {
+        this.chapterList.classList.remove('hidden');
+        this.chapterReader.classList.add('hidden');
+        this.bookmarksSection.classList.add('hidden');
+        this.highlightsSection.classList.add('hidden');
+        // Pause audio when leaving chapter
+        this.audioPlayer.pause();
     }
-
-    getVerseText(chapterId, verseNumber) {
-        const verses = this.data.verses[chapterId.toString()] || [];
-        return verses.find(v => v.verse_number === verseNumber);
+    
+    showChapterReader() {
+        this.chapterList.classList.add('hidden');
+        this.chapterReader.classList.remove('hidden');
+        this.bookmarksSection.classList.add('hidden');
+        this.highlightsSection.classList.add('hidden');
     }
-
-    openChapterAtVerse(chapterId, verseIndex) {
-        this.state.currentVerse = verseIndex;
-        this.openChapter(chapterId);
+    
+    showBookmarks() {
+        this.chapterList.classList.add('hidden');
+        this.chapterReader.classList.add('hidden');
+        this.bookmarksSection.classList.remove('hidden');
+        this.highlightsSection.classList.add('hidden');
+        this.loadBookmarksList();
     }
-
-    // Storage methods
-    saveToStorage(key, data) {
-        try {
-            localStorage.setItem(`quran-${key}`, JSON.stringify(data));
-        } catch (error) {
-            console.error('Error saving to storage:', error);
-        }
+    
+    showHighlights() {
+        this.chapterList.classList.add('hidden');
+        this.chapterReader.classList.add('hidden');
+        this.bookmarksSection.classList.add('hidden');
+        this.highlightsSection.classList.remove('hidden');
+        this.loadHighlightsList();
     }
-
-    loadFromStorage(key) {
-        try {
-            const data = localStorage.getItem(`quran-${key}`);
-            return data ? JSON.parse(data) : null;
-        } catch (error) {
-            console.error('Error loading from storage:', error);
-            return null;
-        }
+    
+    // UI state methods
+    showLoadingOverlay() {
+        this.loadingOverlay.classList.remove('hidden');
     }
-
-    loadBookmarks() {
-        const bookmarks = this.loadFromStorage('bookmarks');
-        if (bookmarks) {
-            this.state.bookmarks = bookmarks;
-        }
+    
+    hideLoadingOverlay() {
+        this.loadingOverlay.classList.add('hidden');
     }
-
-    loadHighlights() {
-        const highlights = this.loadFromStorage('highlights');
-        if (highlights) {
-            this.state.highlights = highlights;
-        }
+    
+    showAudioLoading() {
+        this.audioLoading.style.display = 'block';
     }
-
-    // UI feedback methods
+    
+    hideAudioLoading() {
+        this.audioLoading.style.display = 'none';
+    }
+    
+    showAudioError() {
+        this.audioError.style.display = 'block';
+    }
+    
+    hideAudioError() {
+        this.audioError.style.display = 'none';
+    }
+    
+    handleAudioError(error) {
+        console.error('Audio error:', error);
+        this.hideAudioLoading();
+        this.showAudioError();
+        this.showToast('Failed to load audio');
+    }
+    
     showToast(message) {
-        this.elements.toastMessage.textContent = message;
-        this.elements.toast.classList.add('show');
-        
+        this.toastMessage.textContent = message;
+        this.toast.classList.remove('hidden');
         setTimeout(() => {
-            this.elements.toast.classList.remove('show');
+            this.toast.classList.add('hidden');
         }, 3000);
     }
-
-    showLoading() {
-        this.elements.loadingOverlay.classList.remove('hidden');
-    }
-
-    hideLoading() {
-        this.elements.loadingOverlay.classList.add('hidden');
-    }
-
-    handleAudioError() {
-        this.hideLoading();
-        this.pauseAudio();
-        this.state.audioLoaded = false;
-        this.showToast('Audio not available - using demo mode');
+    
+    // Load bookmarks and highlights lists
+    loadBookmarksList() {
+        const bookmarksList = document.getElementById('bookmarksList');
+        bookmarksList.innerHTML = '';
         
-        // Set up demo mode
-        this.elements.duration.textContent = this.formatTime(this.state.simulatedDuration);
+        Object.values(this.bookmarks).forEach(bookmark => {
+            const chapterData = this.getChapterData().find(c => c.id === bookmark.chapterId);
+            const verseData = this.getVerseData(bookmark.chapterId).find(v => v.number === bookmark.verseNumber);
+            
+            if (chapterData && verseData) {
+                const bookmarkElement = document.createElement('div');
+                bookmarkElement.className = 'bookmark-item';
+                bookmarkElement.innerHTML = `
+                    <h4>${chapterData.name} - Verse ${bookmark.verseNumber}</h4>
+                    <p class="verse-arabic" dir="rtl">${verseData.arabic}</p>
+                    <p class="verse-english">${verseData.english}</p>
+                    <button onclick="quranApp.loadChapter(${bookmark.chapterId})">Go to Chapter</button>
+                `;
+                bookmarksList.appendChild(bookmarkElement);
+            }
+        });
+        
+        if (Object.keys(this.bookmarks).length === 0) {
+            bookmarksList.innerHTML = '<p class="empty-state">No bookmarks yet. Start reading and bookmark your favorite verses!</p>';
+        }
+    }
+    
+    loadHighlightsList() {
+        const highlightsList = document.getElementById('highlightsList');
+        highlightsList.innerHTML = '';
+        
+        Object.values(this.highlights).forEach(highlight => {
+            const chapterData = this.getChapterData().find(c => c.id === highlight.chapterId);
+            const verseData = this.getVerseData(highlight.chapterId).find(v => v.number === highlight.verseNumber);
+            
+            if (chapterData && verseData) {
+                const highlightElement = document.createElement('div');
+                highlightElement.className = 'highlight-item';
+                highlightElement.innerHTML = `
+                    <h4>${chapterData.name} - Verse ${highlight.verseNumber}</h4>
+                    <p class="verse-arabic" dir="rtl">${verseData.arabic}</p>
+                    <p class="verse-english">${verseData.english}</p>
+                    <button onclick="quranApp.loadChapter(${highlight.chapterId})">Go to Chapter</button>
+                `;
+                highlightsList.appendChild(highlightElement);
+            }
+        });
+        
+        if (Object.keys(this.highlights).length === 0) {
+            highlightsList.innerHTML = '<p class="empty-state">No highlights yet. Highlight verses that inspire you!</p>';
+        }
+    }
+    
+    // Sample data (you can expand this with more chapters and verses)
+    getChapterData() {
+        return [
+            { 
+                id: 1, 
+                name: 'Al-Fatiha', 
+                arabic: 'الفاتحة', 
+                translation: 'The Opener',
+                verses: 7, 
+                type: 'Meccan' 
+            },
+            { 
+                id: 2, 
+                name: 'Al-Baqarah', 
+                arabic: 'البقرة', 
+                translation: 'The Cow',
+                verses: 286, 
+                type: 'Medinan' 
+            },
+            { 
+                id: 3, 
+                name: 'Al-Imran', 
+                arabic: 'آل عمران', 
+                translation: 'Family of Imran',
+                verses: 200, 
+                type: 'Medinan' 
+            },
+            { 
+                id: 4, 
+                name: 'An-Nisa', 
+                arabic: 'النساء', 
+                translation: 'The Women',
+                verses: 176, 
+                type: 'Medinan' 
+            },
+            { 
+                id: 5, 
+                name: 'Al-Maidah', 
+                arabic: 'المائدة', 
+                translation: 'The Table Spread',
+                verses: 120, 
+                type: 'Medinan' 
+            }
+        ];
+    }
+    
+    getVerseData(chapterId) {
+        // Sample verse data for Al-Fatiha
+        if (chapterId === 1) {
+            return [
+                {
+                    number: 1,
+                    arabic: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                    english: 'In the name of Allah, the Entirely Merciful, the Especially Merciful.'
+                },
+                {
+                    number: 2,
+                    arabic: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
+                    english: 'All praise is due to Allah, Lord of the worlds.'
+                },
+                {
+                    number: 3,
+                    arabic: 'الرَّحْمَٰنِ الرَّحِيمِ',
+                    english: 'The Entirely Merciful, the Especially Merciful,'
+                },
+                {
+                    number: 4,
+                    arabic: 'مَالِكِ يَوْمِ الدِّينِ',
+                    english: 'Sovereign of the Day of Recompense.'
+                },
+                {
+                    number: 5,
+                    arabic: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
+                    english: 'It is You we worship and You we ask for help.'
+                },
+                {
+                    number: 6,
+                    arabic: 'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
+                    english: 'Guide us to the straight path -'
+                },
+                {
+                    number: 7,
+                    arabic: 'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
+                    english: 'The path of those upon whom You have bestowed favor, not of those who have evoked anger or of those who are astray.'
+                }
+            ];
+        }
+        
+        // For other chapters, return placeholder data
+        return [
+            {
+                number: 1,
+                arabic: 'Sample Arabic text for this chapter...',
+                english: 'Sample English translation will be loaded here...'
+            }
+        ];
     }
 }
 
-// Initialize the application when DOM is loaded
+// Initialize the app when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    window.quranReader = new QuranReader();
+    console.log('Initializing Alhambra Quran App with Audio...');
+    window.quranApp = new AlhambraQuranApp();
 });
