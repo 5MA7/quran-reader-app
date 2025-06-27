@@ -12,7 +12,7 @@ class QuranReader {
                     name_english: "Al-Fatihah",
                     name_translation: "The Opening",
                     verses_count: 7,
-                    audio_url: "https://www.soundjay.com/misc/bell-ringing-05.wav"
+                    audio_url: "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/001.mp3"
                 },
                 {
                     id: 2,
